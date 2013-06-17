@@ -2,6 +2,21 @@ class Color
   PROPERTIES = [:timestamp, :hex, :id, :tags]
   PROPERTIES.each { |prop| attr_accessor prop }
 
+  def self.find(hex, &block)
+    BW::HTTP.get("http://www.colr.org/json/color/#{hex}") do |response|
+      result_data = BW::JSON.parse(response.body.to_str)
+      color_data = result_data["colors"][0]
+
+      # colr will return a color with id == -1 if no color was found
+      color = Color.new(color_data)
+      if color.id.to_i == -1
+        block.call(nil)
+      else
+        block.call(color)
+      end
+    end
+  end
+
   def initialize(hash = {})
     hash.each { |key, value|
       if PROPERTIES.member? key.to_sym
@@ -26,5 +41,11 @@ class Color
     }
 
     @tags = tags
+  end
+
+  def add_tag(tag, &block)
+    BW::HTTP.post("http://www.colr.org/js/color/#{self.hex}/addtag/", payload: {tags: tag}) do |response|
+      block.call
+    end
   end
 end
