@@ -9,4 +9,22 @@ class Color
       end
     }
   end
+
+  def tags
+    @tags ||= []
+  end
+
+  def tags=(tags)
+    if tags.first.is_a? Hash
+      tags = tags.collect { |tag| Tag.new(tag)}
+    end
+
+    tags.each { |tag|
+      if not tag.is_a? Tag
+        raise 'Wrong class for attempted tag #{tag.inspect}'
+      end
+    }
+
+    @tags = tags
+  end
 end
